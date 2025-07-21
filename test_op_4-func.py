@@ -7,6 +7,7 @@ import torch
 from torch._inductor.test_case import TestCase, run_tests
 from torch.testing._internal.common_device_type import instantiate_device_type_tests
 from torch._C import _xpu_getCurrentRawStream as get_raw_stream
+from torch._dynamo.testing import rand_strided
 
 # ------------------- Kernel Imports -------------------
 from op_4_func import (
@@ -32,21 +33,6 @@ from op_4_func import (
 
 class TestCompiledLlamaOps(TestCase):
 
-    @staticmethod
-    def rand_strided(size, stride, dtype, device):
-        is_bf16 = dtype == torch.bfloat16
-        temp_dtype = torch.float32 if is_bf16 else dtype
-        try:
-            tensor = torch.empty_strided(
-                size, stride, dtype=temp_dtype, device=device
-            ).normal_()
-        except Exception:
-            max_pos = sum((s - 1) * st for s, st in zip(size, stride) if s > 0)
-            buffer_size = max_pos + 1
-            buffer = torch.randn(buffer_size, device=device, dtype=temp_dtype)
-            tensor = torch.as_strided(buffer, size, stride)
-        return tensor.to(dtype) if is_bf16 else tensor
-
     def setUp(self):
         super().setUp()
         device = self.device
@@ -67,12 +53,12 @@ class TestCompiledLlamaOps(TestCase):
         # For test isolation, we .clone() the template tensor for each argument.
 
         # Group A: (4, 1), int64
-        t_group_a = self.rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
+        t_group_a = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         self.arg0_1 = t_group_a.clone()
         self.arg3_1 = t_group_a.clone()
 
         # Group B: (128256, 2048), bfloat16
-        t_group_b = self.rand_strided(
+        t_group_b = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
         self.arg1_1 = t_group_b.clone()
@@ -82,7 +68,7 @@ class TestCompiledLlamaOps(TestCase):
 
         # Group C: (4, 2, 131, 128), bfloat16
         # Covers arg7, arg17, arg30, arg32 since s3 and s63 are both 131
-        t_group_c = self.rand_strided(
+        t_group_c = rand_strided(
             (4, 2, 131, 128),
             (33536, 16768, 128, 1),
             device=device,
@@ -103,9 +89,7 @@ class TestCompiledLlamaOps(TestCase):
         self.arg39_1 = t_group_d.clone()
 
         # Group E: (2048,), bfloat16
-        t_group_e = self.rand_strided(
-            (2048,), (1,), device=device, dtype=torch.bfloat16
-        )
+        t_group_e = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         self.arg11_1 = t_group_e.clone()
         self.arg20_1 = t_group_e.clone()
         self.arg25_1 = t_group_e.clone()
@@ -113,7 +97,7 @@ class TestCompiledLlamaOps(TestCase):
         self.arg40_1 = t_group_e.clone()
 
         # Group F: (2048, 2048), bfloat16
-        t_group_f = self.rand_strided(
+        t_group_f = rand_strided(
             (2048, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
         self.arg12_1 = t_group_f.clone()
@@ -122,7 +106,7 @@ class TestCompiledLlamaOps(TestCase):
         self.arg33_1 = t_group_f.clone()
 
         # Group G: (256, 2048), bfloat16
-        t_group_g = self.rand_strided(
+        t_group_g = rand_strided(
             (256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
         self.arg13_1 = t_group_g.clone()
@@ -131,7 +115,7 @@ class TestCompiledLlamaOps(TestCase):
         self.arg28_1 = t_group_g.clone()
 
         # Group H: (128, 2048), bfloat16
-        t_group_h = self.rand_strided(
+        t_group_h = rand_strided(
             (128, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
         self.arg21_1 = t_group_h.clone()
@@ -140,7 +124,7 @@ class TestCompiledLlamaOps(TestCase):
         self.arg37_1 = t_group_h.clone()
 
         # Group I: (2048, 128), bfloat16
-        t_group_i = self.rand_strided(
+        t_group_i = rand_strided(
             (2048, 128), (128, 1), device=device, dtype=torch.bfloat16
         )
         self.arg23_1 = t_group_i.clone()
@@ -148,11 +132,11 @@ class TestCompiledLlamaOps(TestCase):
 
         # --- Unique Tensors ---
         # These have unique creation parameters
-        self.arg2_1 = self.rand_strided((1,), (1,), device=device, dtype=torch.int64)
-        self.arg5_1 = self.rand_strided(
+        self.arg2_1 = rand_strided((1,), (1,), device=device, dtype=torch.int64)
+        self.arg5_1 = rand_strided(
             (4, self.s16), (self.s16, 1), device=device, dtype=torch.int64
         )
-        self.arg8_1 = self.rand_strided((64,), (1,), device=device, dtype=torch.float32)
+        self.arg8_1 = rand_strided((64,), (1,), device=device, dtype=torch.float32)
 
         self.stream0 = get_raw_stream(torch.xpu.current_device())
 
@@ -163,10 +147,8 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_3(
         self, device
     ):
-        buf2 = self.rand_strided(
-            (512, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
-        buf4 = self.rand_strided(
+        buf2 = rand_strided((512, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        buf4 = rand_strided(
             (4, 64, 128), (8192, 128, 1), device=device, dtype=torch.float32
         )
         buf8 = torch.empty_strided(
@@ -183,7 +165,7 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4(
         self, device
     ):
-        buf6 = self.rand_strided(
+        buf6 = rand_strided(
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
         buf9 = torch.empty_strided(
@@ -218,10 +200,8 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_add_cat_mul_2(self, device):
-        buf5 = self.rand_strided(
-            (512, 256), (256, 1), device=device, dtype=torch.bfloat16
-        )
-        buf4 = self.rand_strided(
+        buf5 = rand_strided((512, 256), (256, 1), device=device, dtype=torch.bfloat16)
+        buf4 = rand_strided(
             (4, 64, 128), (8192, 128, 1), device=device, dtype=torch.float32
         )
         buf6 = torch.empty_strided(
@@ -233,7 +213,7 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_clone_6(self, device):
-        buf13 = self.rand_strided(
+        buf13 = rand_strided(
             (4, 16, 128, 128),
             (262144, 16384, 128, 1),
             device=device,
@@ -272,12 +252,8 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_cat_2(self, device):
-        buf5 = self.rand_strided(
-            (4, 256), (256, 1), device=device, dtype=torch.bfloat16
-        )
-        buf4 = self.rand_strided(
-            (4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32
-        )
+        buf5 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
+        buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
         buf6 = torch.empty_strided(
             (4, 2, 132, 128),
             (33792, 16896, 128, 1),
@@ -297,9 +273,7 @@ class TestCompiledLlamaOps(TestCase):
 
     def test_triton_poi_fused_cat_3(self, device):
         s3 = self.s3
-        buf7 = self.rand_strided(
-            (4, 256), (256, 1), device=device, dtype=torch.bfloat16
-        )
+        buf7 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
         ps0 = 1 + s3
         ps1 = 128 + 128 * s3
         buf8 = torch.empty_strided(
@@ -317,12 +291,8 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_4(
         self, device
     ):
-        buf2 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
-        buf4 = self.rand_strided(
-            (4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32
-        )
+        buf2 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
         buf9 = torch.empty_strided(
             (4, 16, 1, 128), (2048, 128, 128, 1), device=device, dtype=torch.bfloat16
         )
@@ -334,7 +304,7 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5(
         self, device
     ):
-        buf6 = self.rand_strided(
+        buf6 = rand_strided(
             (4, 2, 132, 128),
             (33792, 16896, 128, 1),
             device=device,
@@ -359,7 +329,7 @@ class TestCompiledLlamaOps(TestCase):
         ps1 = 128 + 128 * s3
         ps2 = 2048 + 2048 * s3
         xnumel = 8192 + 8192 * s3
-        buf8 = self.rand_strided(
+        buf8 = rand_strided(
             (4, 2, ps0, 128),
             (256 * ps0, 128 * ps0, 128, 1),
             device=device,
@@ -377,9 +347,7 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7(self, device):
-        buf18 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
+        buf18 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf20 = torch.empty_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
@@ -397,10 +365,8 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_mul_silu_8(self, device):
-        buf22 = self.rand_strided(
-            (4, 128), (128, 1), device=device, dtype=torch.bfloat16
-        )
-        buf23 = self.rand_strided(
+        buf22 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.bfloat16)
+        buf23 = rand_strided(
             (4, 1, 128), (128, 128, 1), device=device, dtype=torch.bfloat16
         )
         triton_poi_fused_mul_silu_8.run(buf23, buf22, 512, stream=self.stream0)
@@ -409,12 +375,8 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10(
         self, device
     ):
-        buf18 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
-        buf24 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
+        buf18 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        buf24 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf26 = torch.empty_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
@@ -433,15 +395,11 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9(self, device):
-        buf42 = self.rand_strided(
+        buf42 = rand_strided(
             (4, 1, 2048), (2048, 8192, 1), device=device, dtype=torch.bfloat16
         )
-        buf24 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
-        buf41 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
+        buf24 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        buf41 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf44 = torch.empty_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
@@ -461,10 +419,8 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11(self, device):
-        buf48 = self.rand_strided(
-            (4, 2048), (2048, 1), device=device, dtype=torch.bfloat16
-        )
-        buf50 = self.rand_strided(
+        buf48 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        buf50 = rand_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
         triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11.run(
