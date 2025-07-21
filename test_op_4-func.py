@@ -48,7 +48,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_3(
         self, device
     ):
-        # Local inputs based on the second 'call' function from your prompt.
         arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf2 = rand_strided((512, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided(
@@ -61,6 +60,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_3(
+        #   in_ptr0, in_ptr1, in_ptr2, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_3.run(
             buf2, buf4, arg6_1.item(), buf8, 1048576, stream=self.stream0
         )
@@ -69,7 +71,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4(
         self, device
     ):
-        # Local inputs based on the second 'call' function.
         buf6 = rand_strided(
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
@@ -79,6 +80,9 @@ class TestCompiledLlamaOps(TestCase):
             device=device,
             dtype=torch.bfloat16,
         )
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4(
+        #   in_ptr0, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
 
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4.run(
             buf6, buf9, 1048576, stream=self.stream0
@@ -88,7 +92,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_5(
         self, device
     ):
-        # Local inputs based on the second 'call' function.
         arg2_1 = rand_strided((128,), (1,), device=device, dtype=torch.int64)
         arg4_1 = rand_strided((4, 128), (0, 1), device=device, dtype=torch.int64)
         buf11 = torch.empty_strided(
@@ -110,7 +113,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_add_cat_mul_2(self, device):
-        # Local inputs based on the second 'call' function.
         arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf5 = rand_strided((512, 256), (256, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided(
@@ -126,7 +128,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_clone_6(self, device):
-        # Local inputs based on the second 'call' function.
         buf13 = rand_strided(
             (4, 16, 128, 128),
             (262144, 16384, 128, 1),
@@ -144,7 +145,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0(self, device):
-        # Local inputs based on the first 'call' function.
         arg0_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
@@ -161,7 +161,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused__to_copy_1(self, device):
-        # Local inputs based on the first 'call' function.
         arg3_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         buf3 = torch.empty_strided(
             (4, 1, 1), (1, 4, 4), device=device, dtype=torch.float32
@@ -171,7 +170,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_cat_2(self, device):
-        # Local inputs based on the first 'call' function.
         arg7_1 = rand_strided(
             (4, 2, 131, 128),
             (33536, 16768, 128, 1),
@@ -194,7 +192,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_cat_3(self, device):
-        # Local inputs based on the first 'call' function.
         s3 = 131
         arg17_1 = rand_strided(
             (4, 2, s3, 128),
@@ -222,7 +219,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_4(
         self, device
     ):
-        # Local inputs based on the first 'call' function.
         arg9_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf2 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
@@ -239,7 +235,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5(
         self, device
     ):
-        # Local inputs based on the first 'call' function.
         buf6 = rand_strided(
             (4, 2, 132, 128),
             (33792, 16896, 128, 1),
@@ -261,7 +256,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6(
         self, device
     ):
-        # Local inputs based on the first 'call' function.
         s3 = 131
         ps0 = 1 + s3
         ps1 = 128 + 128 * s3
@@ -324,7 +318,6 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10(
         self, device
     ):
-        # Local inputs based on the first 'call' function.
         arg0_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
