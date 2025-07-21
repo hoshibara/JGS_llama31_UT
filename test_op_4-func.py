@@ -80,10 +80,10 @@ class TestCompiledLlamaOps(TestCase):
             device=device,
             dtype=torch.bfloat16,
         )
+
         # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4(
         #   in_ptr0, out_ptr0, xnumel, XBLOCK : tl.constexpr
         # ):
-
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_4.run(
             buf6, buf9, 1048576, stream=self.stream0
         )
@@ -107,6 +107,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_5(
+        #   in_ptr0, in_ptr1, out_ptr0, out_ptr1, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_clone_mul_scalar_tensor_where_5.run(
             arg2_1, arg4_1, buf11, buf34, 65536, stream=self.stream0
         )
@@ -122,6 +125,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_poi_fused_add_cat_mul_2(
+        #   in_ptr0, in_ptr1, in_ptr2, out_ptr0, ynumel, xnumel, YBLOCK : tl.constexpr, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused_add_cat_mul_2.run(
             buf5, buf4, arg6_1.item(), buf6, 512, 256, stream=self.stream0
         )
@@ -141,6 +147,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused_clone_6(
+        #   in_ptr0, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused_clone_6.run(buf13, buf17, 1048576, stream=self.stream0)
         self.assertTrue(True)
 
@@ -155,6 +164,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0(
+        #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0.run(
             arg0_1, arg1_1, arg11_1, arg10_1.item(), buf1, 4, 2048, stream=self.stream0
         )
@@ -166,6 +178,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 1), (1, 4, 4), device=device, dtype=torch.float32
         )
 
+        # def triton_poi_fused__to_copy_1(
+        #   in_ptr0, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__to_copy_1.run(arg3_1, buf3, 4, stream=self.stream0)
         self.assertTrue(True)
 
@@ -186,6 +201,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused_cat_2(
+        #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused_cat_2.run(
             arg7_1, buf5, buf4, arg9_1.item(), buf6, 135168, stream=self.stream0
         )
@@ -210,6 +228,9 @@ class TestCompiledLlamaOps(TestCase):
         )
         xnumel = 1024 + 1024 * s3
 
+        # def triton_poi_fused_cat_3(
+        #   in_ptr0, in_ptr1, out_ptr0, ks0, ks1, ks2, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused_cat_3.run(
             arg17_1, buf7, buf8, ps0, s3, ps1, xnumel, stream=self.stream0
         )
@@ -226,6 +247,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 16, 1, 128), (2048, 128, 128, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_4(
+        #   in_ptr0, in_ptr1, in_ptr2, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_4.run(
             buf2, buf4, arg9_1.item(), buf9, 8192, stream=self.stream0
         )
@@ -248,6 +272,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5(
+        #   in_ptr0, out_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5.run(
             buf6, buf10, 1081344, stream=self.stream0
         )
@@ -274,13 +301,15 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
 
+        # def triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6(
+        #   in_ptr0, out_ptr0, ks0, ks1, ks2, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6.run(
             buf8, buf11, ps1, ps2, s3, xnumel, stream=self.stream0
         )
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7(self, device):
-        # Local inputs based on the first 'call' function for the aliased kernel triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_8
         arg0_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
@@ -292,6 +321,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7(
+        #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7.run(
             arg0_1,
             arg1_1,
@@ -306,12 +338,14 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_poi_fused_mul_silu_8(self, device):
-        # Local inputs based on the first 'call' function for the aliased kernel triton_poi_fused_mul_silu_9
         buf22 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.bfloat16)
         buf23 = rand_strided(
             (4, 1, 128), (128, 128, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_poi_fused_mul_silu_8(
+        #   in_out_ptr0, in_ptr0, xnumel, XBLOCK : tl.constexpr
+        # ):
         triton_poi_fused_mul_silu_8.run(buf23, buf22, 512, stream=self.stream0)
         self.assertTrue(True)
 
@@ -330,6 +364,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10(
+        #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, in_ptr5, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10.run(
             arg0_1,
             arg1_1,
@@ -345,7 +382,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9(self, device):
-        # Local inputs based on the first 'call' function for the aliased kernel triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_11
         arg0_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
@@ -361,6 +397,9 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9(
+        #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, in_ptr5, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9.run(
             buf42,
             arg0_1,
@@ -377,7 +416,6 @@ class TestCompiledLlamaOps(TestCase):
         self.assertTrue(True)
 
     def test_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11(self, device):
-        # Local inputs based on the first 'call' function for the aliased kernel triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_12
         arg39_1 = torch.randn((), device="cpu", dtype=torch.float64)
         arg40_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         buf48 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
@@ -385,12 +423,15 @@ class TestCompiledLlamaOps(TestCase):
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
 
+        # def triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11(
+        #   in_out_ptr0, in_ptr0, in_ptr1, in_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11.run(
             buf50,
             buf48,
             arg40_1,
             arg39_1.item(),
-            4,
+            512,
             2048,
             stream=self.stream0,
         )
