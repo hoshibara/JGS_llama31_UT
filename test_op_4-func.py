@@ -31,7 +31,8 @@ from op_4_func import (
     triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0,
 )
 
-empty_strided_xpu = torch._C._dynamo.guards._empty_strided_xpu
+torch.manual_seed(42)
+torch.xpu.manual_seed(42)
 
 
 class TestCompiledLlamaOps(TestCase):
@@ -98,7 +99,7 @@ class TestCompiledLlamaOps(TestCase):
 
             # Save all initial arguments
             # Note: For in_out_ptr, this saves the initial state.
-            torch.save({"args_list": kernel_args_list, "kwargs": kwargs}, input_file)
+            # torch.save({"args_list": kernel_args_list, "kwargs": kwargs}, input_file)
 
             # Run the kernel
             # print('[DEBUG][DUMP] Running kernel with args:', kernel_args)
@@ -125,40 +126,40 @@ class TestCompiledLlamaOps(TestCase):
 
         else:  # COMPARE mode
             print(f"[COMPARE] Running '{test_name}' and verifying results...")
-            if not input_file.exists() or not output_file.exists():
+            if not output_file.exists():
                 self.fail(
                     f"Data files for '{test_name}' not found. Run in DUMP mode first."
                 )
 
             # Load inputs and golden outputs
-            loaded_data = torch.load(input_file, map_location=device)
-            loaded_args_list = loaded_data["args_list"]
-            loaded_kwargs = loaded_data["kwargs"]
+            # loaded_data = torch.load(input_file, map_location=device)
+            # kernel_args_list = loaded_data["args_list"]
+            # kwargs = loaded_data["kwargs"]
 
             golden_outputs = torch.load(output_file, map_location=device)
             golden_out_tensors_list = golden_outputs["out_tensors_list"]
             golden_in_out_tensors_list = golden_outputs["in_out_tensors_list"]
 
-            for loaded_args, golden_out_tensors, golden_in_out_tensors in zip(
-                loaded_args_list, golden_out_tensors_list, golden_in_out_tensors_list
+            for kernel_args, golden_out_tensors, golden_in_out_tensors in zip(
+                kernel_args_list, golden_out_tensors_list, golden_in_out_tensors_list
             ):
                 # Run the kernel with loaded inputs
                 # print('[DEBUG][COMPARE] Running kernel with args:', run_args)
                 # print('[DEBUG][COMPARE] Running kernel with kwargs:', kwargs)
-                func(*loaded_args, stream=stream, **loaded_kwargs)
+                func(*kernel_args, stream=stream, **kwargs)
                 torch.xpu.synchronize()
 
                 # Compare results
                 for i, idx in enumerate(output_indices):
                     self.assertEqual(
-                        loaded_args[idx],
+                        kernel_args[idx],
                         golden_out_tensors[i],
                         msg=f"Output mismatch at index {idx}",
                     )
 
                 for i, idx in enumerate(in_out_indices):
                     self.assertEqual(
-                        loaded_args[idx],
+                        kernel_args[idx],
                         golden_in_out_tensors[i],
                         msg=f"In-out mismatch at index {idx}",
                     )
@@ -171,7 +172,7 @@ class TestCompiledLlamaOps(TestCase):
             (4, 64, 128), (8192, 128, 1), device=device, dtype=torch.float32
         )
         arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        buf8 = torch.empty_strided(
+        buf8 = rand_strided(
             (4, 16, 128, 128),
             (262144, 16384, 128, 1),
             device=device,
@@ -194,14 +195,14 @@ class TestCompiledLlamaOps(TestCase):
         buf6 = rand_strided(
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
-        buf9 = torch.empty_strided(
+        buf9 = rand_strided(
             (4, 16, 128, 128),
             (262144, 16384, 128, 1),
             device=device,
             dtype=torch.bfloat16,
         )
         buf7 = rand_strided((512, 256), (256, 1), device=device, dtype=torch.bfloat16)
-        buf10 = torch.empty_strided(
+        buf10 = rand_strided(
             (4, 16, 128, 128),
             (262144, 16384, 128, 1),
             device=device,
@@ -226,13 +227,13 @@ class TestCompiledLlamaOps(TestCase):
     ):
         arg2_1 = rand_strided((128,), (1,), device=device, dtype=torch.int64)
         arg4_1 = rand_strided((4, 128), (0, 1), device=device, dtype=torch.int64)
-        buf11 = torch.empty_strided(
+        buf11 = rand_strided(
             (4, 1, 128, 128),
             (16384, 16384, 128, 1),
             device=device,
             dtype=torch.bfloat16,
         )
-        buf34 = torch.empty_strided(
+        buf34 = rand_strided(
             (4, 1, 128, 128),
             (16384, 16384, 128, 1),
             device=device,
@@ -255,7 +256,7 @@ class TestCompiledLlamaOps(TestCase):
             (4, 64, 128), (8192, 128, 1), device=device, dtype=torch.float32
         )
         arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        buf6 = torch.empty_strided(
+        buf6 = rand_strided(
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_poi_fused_add_cat_mul_2(in_ptr0, in_ptr1, in_ptr2, out_ptr0, ynumel, xnumel, YBLOCK, XBLOCK)
@@ -276,7 +277,7 @@ class TestCompiledLlamaOps(TestCase):
             device=device,
             dtype=torch.bfloat16,
         )
-        buf17 = torch.empty_strided(
+        buf17 = rand_strided(
             (4, 128, 16, 128),
             (262144, 2048, 128, 1),
             device=device,
@@ -298,9 +299,9 @@ class TestCompiledLlamaOps(TestCase):
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
-        arg10_1 = rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16)
+        arg10_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         arg9_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
-        buf1 = torch.empty_strided(
+        buf1 = rand_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_red_fused__..._rsqrt_0(in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr1, xnumel, r0_numel, XBLOCK, R0_BLOCK)
@@ -315,13 +316,18 @@ class TestCompiledLlamaOps(TestCase):
                 2048,
             ],
             [
-                rand_strided((4, 128), (128, 1), device="xpu:0", dtype=torch.int64),
+                rand_strided((4, 128), (128, 1), device=device, dtype=torch.int64),
                 rand_strided(
-                    (128256, 2048), (2048, 1), device="xpu:0", dtype=torch.bfloat16
+                    (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
                 ),
-                rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16),
+                rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
                 rand_strided((), (), device="cpu", dtype=torch.float64).item(),
-                empty_strided_xpu((4, 128, 2048), (262144, 2048, 1), torch.bfloat16),
+                rand_strided(
+                    (4, 128, 2048),
+                    (262144, 2048, 1),
+                    device=device,
+                    dtype=torch.bfloat16,
+                ),
                 512,
                 2048,
             ],
@@ -337,11 +343,9 @@ class TestCompiledLlamaOps(TestCase):
 
     def test_triton_poi_fused__to_copy_1(self, device):
         arg3_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
-        buf3 = torch.empty_strided(
-            (4, 1, 1), (1, 4, 4), device=device, dtype=torch.float32
-        )
+        buf3 = rand_strided((4, 1, 1), (1, 4, 4), device=device, dtype=torch.float32)
         arg3_1_2 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.int64)
-        buf3_2 = torch.empty_strided(
+        buf3_2 = rand_strided(
             (4, 1, 128), (128, 512, 1), device=device, dtype=torch.float32
         )
         # def triton_poi_fused__to_copy_1(in_ptr0, out_ptr0, xnumel, XBLOCK)
@@ -360,15 +364,18 @@ class TestCompiledLlamaOps(TestCase):
 
     def test_triton_poi_fused_cat_2(self, device):
         arg6_1 = rand_strided(
-            (4, 2, 128, 128), (32768, 128, 256, 1), device="xpu:0", dtype=torch.bfloat16
+            (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
-        buf5 = empty_strided_xpu((4, 256), (256, 1), torch.bfloat16)
-        buf4 = empty_strided_xpu((4, 64, 1), (64, 1, 1), torch.float32)
-        buf6 = empty_strided_xpu(
-            (4, 2, 129, 128), (33024, 16512, 128, 1), torch.bfloat16
+        buf5 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
+        buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
+        buf6 = rand_strided(
+            (4, 2, 129, 128),
+            (33024, 16512, 128, 1),
+            device=device,
+            dtype=torch.bfloat16,
         )
         arg8_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
-        buf6 = torch.empty_strided(
+        buf6 = rand_strided(
             (4, 2, 132, 128),
             (33792, 16896, 128, 1),
             device=device,
@@ -392,7 +399,7 @@ class TestCompiledLlamaOps(TestCase):
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
         buf7 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
-        buf8 = torch.empty_strided(
+        buf8 = rand_strided(
             (4, 2, 129, 128),
             (33024, 16512, 128, 1),
             device=device,
@@ -422,7 +429,7 @@ class TestCompiledLlamaOps(TestCase):
         buf2 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
         arg9_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        buf9 = torch.empty_strided(
+        buf9 = rand_strided(
             (4, 16, 1, 128), (2048, 128, 128, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_poi_fused__..._where_4(in_ptr0, in_ptr1, in_ptr2, out_ptr0, xnumel, XBLOCK)
@@ -445,7 +452,7 @@ class TestCompiledLlamaOps(TestCase):
             device=device,
             dtype=torch.bfloat16,
         )
-        buf10 = torch.empty_strided(
+        buf10 = rand_strided(
             (4, 16, 129, 128),
             (264192, 16512, 128, 1),
             device=device,
@@ -467,8 +474,12 @@ class TestCompiledLlamaOps(TestCase):
     ):
         arg2_1 = rand_strided((1,), (1,), device=device, dtype=torch.int64)
         arg5_1 = rand_strided((4, 129), (129, 1), device=device, dtype=torch.int64)
-        buf12 = empty_strided_xpu((4, 1, 1, 129), (129, 129, 129, 1), torch.bfloat16)
-        buf35 = empty_strided_xpu((4, 1, 1, 129), (129, 129, 129, 1), torch.bfloat16)
+        buf12 = rand_strided(
+            (4, 1, 1, 129), (129, 129, 129, 1), device=device, dtype=torch.bfloat16
+        )
+        buf35 = rand_strided(
+            (4, 1, 1, 129), (129, 129, 129, 1), device=device, dtype=torch.bfloat16
+        )
         s16 = 129
 
         # def triton_poi_fused__..._where_6(in_ptr0, out_ptr0, ks0, ks1, ks2, xnumel, XBLOCK)
@@ -492,7 +503,7 @@ class TestCompiledLlamaOps(TestCase):
         buf18 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         arg18_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         arg17_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        buf20 = torch.empty_strided(
+        buf20 = rand_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_red_fused__..._rsqrt_7(in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, out_ptr1, xnumel, r0_numel, XBLOCK, R0_BLOCK)
@@ -508,7 +519,7 @@ class TestCompiledLlamaOps(TestCase):
                 ),
                 rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
                 torch.randn((), device="cpu", dtype=torch.float64).item(),
-                torch.empty_strided(
+                rand_strided(
                     (4, 128, 2048),
                     (262144, 2048, 1),
                     device=device,
@@ -600,7 +611,7 @@ class TestCompiledLlamaOps(TestCase):
                 ),
                 rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64),
                 rand_strided(
-                    (128256, 2048), (2048, 1), device="xpu:0", dtype=torch.bfloat16
+                    (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
                 ),
                 rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
                 rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
@@ -635,7 +646,7 @@ class TestCompiledLlamaOps(TestCase):
         )
         arg20_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         arg19_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
-        buf26 = torch.empty_strided(
+        buf26 = rand_strided(
             (4, 128, 2048), (262144, 2048, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9(
@@ -662,7 +673,7 @@ class TestCompiledLlamaOps(TestCase):
                 rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
                 rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
                 rand_strided((), (), device="cpu", dtype=torch.float64).item(),
-                torch.empty_strided(
+                rand_strided(
                     (4, 1, 2048),
                     (2048, 2048, 1),
                     device=device,
@@ -705,7 +716,7 @@ class TestCompiledLlamaOps(TestCase):
                     (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
                 ),
                 rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
-                rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16),
+                rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
                 rand_strided((), (), device="cpu", dtype=torch.float64).item(),
                 4,
                 2048,
