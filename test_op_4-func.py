@@ -31,6 +31,8 @@ from op_4_func import (
     triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0,
 )
 
+empty_strided_xpu = torch._C._dynamo.guards._empty_strided_xpu
+
 
 class TestCompiledLlamaOps(TestCase):
     """
@@ -248,11 +250,11 @@ class TestCompiledLlamaOps(TestCase):
         )
 
     def test_triton_poi_fused_add_cat_mul_2(self, device):
-        arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf5 = rand_strided((512, 256), (256, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided(
             (4, 64, 128), (8192, 128, 1), device=device, dtype=torch.float32
         )
+        arg6_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf6 = torch.empty_strided(
             (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
@@ -296,13 +298,34 @@ class TestCompiledLlamaOps(TestCase):
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
-        arg11_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
-        arg10_1 = torch.randn((), device="cpu", dtype=torch.float64)
+        arg10_1 = rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16)
+        arg9_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
         buf1 = torch.empty_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_red_fused__..._rsqrt_0(in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr1, xnumel, r0_numel, XBLOCK, R0_BLOCK)
-        kernel_args = [[arg0_1, arg1_1, arg11_1, arg10_1.item(), buf1, 4, 2048]]
+        kernel_args = [
+            [
+                arg0_1,
+                arg1_1,
+                arg10_1,
+                arg9_1.item(),
+                buf1,
+                4,
+                2048,
+            ],
+            [
+                rand_strided((4, 128), (128, 1), device="xpu:0", dtype=torch.int64),
+                rand_strided(
+                    (128256, 2048), (2048, 1), device="xpu:0", dtype=torch.bfloat16
+                ),
+                rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16),
+                rand_strided((), (), device="cpu", dtype=torch.float64).item(),
+                empty_strided_xpu((4, 128, 2048), (262144, 2048, 1), torch.bfloat16),
+                512,
+                2048,
+            ],
+        ]
         self._run_test(
             "triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0",
             triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0.run,
@@ -336,15 +359,15 @@ class TestCompiledLlamaOps(TestCase):
         )
 
     def test_triton_poi_fused_cat_2(self, device):
-        arg7_1 = rand_strided(
-            (4, 2, 131, 128),
-            (33536, 16768, 128, 1),
-            device=device,
-            dtype=torch.bfloat16,
+        arg6_1 = rand_strided(
+            (4, 2, 128, 128), (32768, 128, 256, 1), device="xpu:0", dtype=torch.bfloat16
         )
-        arg9_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        buf5 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
-        buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
+        buf5 = empty_strided_xpu((4, 256), (256, 1), torch.bfloat16)
+        buf4 = empty_strided_xpu((4, 64, 1), (64, 1, 1), torch.float32)
+        buf6 = empty_strided_xpu(
+            (4, 2, 129, 128), (33024, 16512, 128, 1), torch.bfloat16
+        )
+        arg8_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
         buf6 = torch.empty_strided(
             (4, 2, 132, 128),
             (33792, 16896, 128, 1),
@@ -352,7 +375,9 @@ class TestCompiledLlamaOps(TestCase):
             dtype=torch.bfloat16,
         )
         # def triton_poi_fused_cat_2(in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr0, xnumel, XBLOCK)
-        kernel_args = [[arg7_1, buf5, buf4, arg9_1.item(), buf6, 135168]]
+        kernel_args = [
+            [arg6_1, buf5, buf4, arg8_1.item(), buf6, 132096],
+        ]
         self._run_test(
             "triton_poi_fused_cat_2",
             triton_poi_fused_cat_2.run,
@@ -363,25 +388,25 @@ class TestCompiledLlamaOps(TestCase):
         )
 
     def test_triton_poi_fused_cat_3(self, device):
-        s3 = 131
-        arg17_1 = rand_strided(
-            (4, 2, s3, 128),
-            (256 * s3, 128 * s3, 128, 1),
-            device=device,
-            dtype=torch.bfloat16,
+        arg15_1 = rand_strided(
+            (4, 2, 128, 128), (32768, 128, 256, 1), device=device, dtype=torch.bfloat16
         )
         buf7 = rand_strided((4, 256), (256, 1), device=device, dtype=torch.bfloat16)
-        ps0 = 1 + s3
-        ps1 = 128 + 128 * s3
         buf8 = torch.empty_strided(
-            (4, 2, ps0, 128),
-            (256 * ps0, 128 * ps0, 128, 1),
+            (4, 2, 129, 128),
+            (33024, 16512, 128, 1),
             device=device,
             dtype=torch.bfloat16,
         )
-        xnumel = 1024 + 1024 * s3
-        # def triton_poi_fused_cat_3(in_ptr0, in_ptr1, out_ptr0, ks0, ks1, ks2, xnumel, XBLOCK)
-        kernel_args = [[arg17_1, buf7, buf8, ps0, s3, ps1, xnumel]]
+        # def triton_poi_fused_cat_3(in_ptr0, in_ptr1, out_ptr0, xnumel, XBLOCK : tl.constexpr):
+        kernel_args = [
+            [
+                arg15_1,
+                buf7,
+                buf8,
+                132096,
+            ]
+        ]
         self._run_test(
             "triton_poi_fused_cat_3",
             triton_poi_fused_cat_3.run,
@@ -394,9 +419,9 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_4(
         self, device
     ):
-        arg9_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf2 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
         buf4 = rand_strided((4, 64, 1), (64, 1, 1), device=device, dtype=torch.float32)
+        arg9_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf9 = torch.empty_strided(
             (4, 16, 1, 128), (2048, 128, 128, 1), device=device, dtype=torch.bfloat16
         )
@@ -415,19 +440,19 @@ class TestCompiledLlamaOps(TestCase):
         self, device
     ):
         buf6 = rand_strided(
-            (4, 2, 132, 128),
-            (33792, 16896, 128, 1),
+            (4, 2, 129, 128),
+            (33024, 16512, 128, 1),
             device=device,
             dtype=torch.bfloat16,
         )
         buf10 = torch.empty_strided(
-            (4, 16, 132, 128),
-            (270336, 16896, 128, 1),
+            (4, 16, 129, 128),
+            (264192, 16512, 128, 1),
             device=device,
             dtype=torch.bfloat16,
         )
         # def triton_poi_fused__..._where_5(in_ptr0, out_ptr0, xnumel, XBLOCK)
-        kernel_args = [[buf6, buf10, 1081344]]
+        kernel_args = [[buf6, buf10, 1056768]]
         self._run_test(
             "triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5",
             triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_5.run,
@@ -440,25 +465,16 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6(
         self, device
     ):
-        s3 = 131
-        ps0 = 1 + s3
-        ps1 = 128 + 128 * s3
-        ps2 = 2048 + 2048 * s3
-        xnumel = 8192 + 8192 * s3
-        buf8 = rand_strided(
-            (4, 2, ps0, 128),
-            (256 * ps0, 128 * ps0, 128, 1),
-            device=device,
-            dtype=torch.bfloat16,
-        )
-        buf11 = torch.empty_strided(
-            (4, 16, ps0, 128),
-            (ps2, 128 * ps0, 128, 1),
-            device=device,
-            dtype=torch.bfloat16,
-        )
+        arg2_1 = rand_strided((1,), (1,), device=device, dtype=torch.int64)
+        arg5_1 = rand_strided((4, 129), (129, 1), device=device, dtype=torch.int64)
+        buf12 = empty_strided_xpu((4, 1, 1, 129), (129, 129, 129, 1), torch.bfloat16)
+        buf35 = empty_strided_xpu((4, 1, 1, 129), (129, 129, 129, 1), torch.bfloat16)
+        s16 = 129
+
         # def triton_poi_fused__..._where_6(in_ptr0, out_ptr0, ks0, ks1, ks2, xnumel, XBLOCK)
-        kernel_args = [[buf8, buf11, ps1, ps2, s3, xnumel]]
+        kernel_args = [
+            [arg2_1, arg5_1, buf12, buf35, s16, 516],
+        ]
         self._run_test(
             "triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6",
             triton_poi_fused__scaled_dot_product_fused_attention_overrideable_add_cat_mul_scalar_tensor_where_6.run,
@@ -473,14 +489,35 @@ class TestCompiledLlamaOps(TestCase):
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
-        arg19_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        arg20_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         buf18 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
+        arg18_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
+        arg17_1 = torch.randn((), device="cpu", dtype=torch.float64)
         buf20 = torch.empty_strided(
             (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
         )
         # def triton_red_fused__..._rsqrt_7(in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, out_ptr1, xnumel, r0_numel, XBLOCK, R0_BLOCK)
-        kernel_args = [[arg0_1, arg1_1, buf18, arg20_1, arg19_1.item(), buf20, 4, 2048]]
+        kernel_args = [
+            [arg0_1, arg1_1, buf18, arg18_1, arg17_1.item(), buf20, 4, 2048],
+            [
+                rand_strided((4, 128), (128, 1), device=device, dtype=torch.int64),
+                rand_strided(
+                    (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
+                ),
+                rand_strided(
+                    (512, 2048), (2048, 1), device=device, dtype=torch.bfloat16
+                ),
+                rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
+                torch.randn((), device="cpu", dtype=torch.float64).item(),
+                torch.empty_strided(
+                    (4, 128, 2048),
+                    (262144, 2048, 1),
+                    device=device,
+                    dtype=torch.bfloat16,
+                ),
+                512,
+                2048,
+            ],
+        ]
         self._run_test(
             "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7",
             triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7.run,
@@ -491,18 +528,18 @@ class TestCompiledLlamaOps(TestCase):
         )
 
     def test_triton_poi_fused_mul_silu_8(self, device):
-        buf23 = rand_strided(
-            (4, 1, 128), (128, 128, 1), device=device, dtype=torch.bfloat16
-        )
-        buf22 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.bfloat16)
         buf47 = rand_strided(
             (4, 128, 128), (16384, 128, 1), device=device, dtype=torch.bfloat16
         )
         buf46 = rand_strided((512, 128), (128, 1), device=device, dtype=torch.bfloat16)
+        buf23 = rand_strided(
+            (4, 1, 128), (128, 128, 1), device=device, dtype=torch.bfloat16
+        )
+        buf22 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.bfloat16)
         # def triton_poi_fused_mul_silu_8(in_out_ptr0, in_ptr0, xnumel, XBLOCK)
         kernel_args = [
-            [buf23, buf22, 512],
             [buf47, buf46, 65536],
+            [buf23, buf22, 512],
         ]
         self._run_test(
             "triton_poi_fused_mul_silu_8",
@@ -516,37 +553,72 @@ class TestCompiledLlamaOps(TestCase):
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10(
         self, device
     ):
-        arg0_1 = rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64)
+        buf42 = rand_strided(
+            (4, 128, 2048),
+            (262144, 2048, 1),
+            device=device,
+            dtype=torch.bfloat16,
+        )
+        arg0_1 = rand_strided((4, 128), (128, 1), device=device, dtype=torch.int64)
         arg1_1 = rand_strided(
             (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
-        arg24_1 = torch.randn((), device="cpu", dtype=torch.float64)
-        arg25_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
-        buf18 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
-        buf24 = rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16)
-        buf26 = torch.empty_strided(
-            (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
+        buf24 = rand_strided(
+            (512, 2048), (2048, 1), device=device, dtype=torch.bfloat16
         )
-        # def triton_red_fused__..._rsqrt_10(in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, in_ptr5, out_ptr1, xnumel, r0_numel, XBLOCK, R0_BLOCK)
+        buf41 = rand_strided(
+            (512, 2048), (2048, 1), device=device, dtype=torch.bfloat16
+        )
+        arg26_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
+        arg25_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
+        buf44 = rand_strided(
+            (4, 128, 2048), (262144, 2048, 1), device=device, dtype=torch.bfloat16
+        )
+        # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10(
+        #   in_out_ptr0, in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, in_ptr5, out_ptr1,
+        #   xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
+        # ):
         kernel_args = [
             [
+                buf42,
                 arg0_1,
                 arg1_1,
-                buf18,
                 buf24,
-                arg25_1,
-                arg24_1.item(),
-                buf26,
+                buf41,
+                arg26_1,
+                arg25_1.item(),
+                buf44,
+                512,
+                2048,
+            ],
+            [
+                rand_strided(
+                    (4, 1, 2048),
+                    (2048, 2048, 1),
+                    device=device,
+                    dtype=torch.bfloat16,
+                ),
+                rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64),
+                rand_strided(
+                    (128256, 2048), (2048, 1), device="xpu:0", dtype=torch.bfloat16
+                ),
+                rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
+                rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
+                rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
+                rand_strided((), (), device="cpu", dtype=torch.float64).item(),
+                rand_strided(
+                    (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
+                ),
                 4,
                 2048,
-            ]
+            ],
         ]
         self._run_test(
             "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10",
             triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_10.run,
             kernel_args,
-            output_indices=[6],
-            in_out_indices=[],
+            output_indices=[7],
+            in_out_indices=[0],
             stream=self.stream0,
         )
 
@@ -569,7 +641,6 @@ class TestCompiledLlamaOps(TestCase):
         # def triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9(
         #   in_ptr0, in_ptr1, in_ptr2, in_ptr3, in_ptr4, in_ptr5, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr
         # ):
-        # NOTE: The provided comment had 7 inputs, but the call has 8. Assuming in_ptr6 is arg34_1.item().
         kernel_args = [
             [
                 arg0_1,
@@ -581,7 +652,25 @@ class TestCompiledLlamaOps(TestCase):
                 buf26,
                 512,
                 2048,
-            ]
+            ],
+            [
+                rand_strided((4, 1), (1, 1), device=device, dtype=torch.int64),
+                rand_strided(
+                    (128256, 2048), (2048, 1), device=device, dtype=torch.bfloat16
+                ),
+                rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
+                rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
+                rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16),
+                rand_strided((), (), device="cpu", dtype=torch.float64).item(),
+                torch.empty_strided(
+                    (4, 1, 2048),
+                    (2048, 2048, 1),
+                    device=device,
+                    dtype=torch.bfloat16,
+                ),
+                4,
+                2048,
+            ],
         ]
         self._run_test(
             "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_9",
@@ -602,7 +691,26 @@ class TestCompiledLlamaOps(TestCase):
         arg31_1 = rand_strided((2048,), (1,), device=device, dtype=torch.bfloat16)
         arg30_1 = rand_strided((), (), device="cpu", dtype=torch.float64)
         # def triton_red_fused__..._rsqrt_11(in_out_ptr0, in_ptr0, in_ptr1, in_ptr2, xnumel, r0_numel, XBLOCK, R0_BLOCK)
-        kernel_args = [[buf50, buf48, arg31_1, arg30_1.item(), 512, 2048]]
+        kernel_args = [
+            [
+                buf50,
+                buf48,
+                arg31_1,
+                arg30_1.item(),
+                512,
+                2048,
+            ],
+            [
+                rand_strided(
+                    (4, 1, 2048), (2048, 2048, 1), device=device, dtype=torch.bfloat16
+                ),
+                rand_strided((4, 2048), (2048, 1), device=device, dtype=torch.bfloat16),
+                rand_strided((2048,), (1,), device="xpu:0", dtype=torch.bfloat16),
+                rand_strided((), (), device="cpu", dtype=torch.float64).item(),
+                4,
+                2048,
+            ],
+        ]
         self._run_test(
             "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11",
             triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_11.run,
