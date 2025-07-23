@@ -1,3 +1,3 @@
-from c2bfves4bpjtey4yqcewx2wmcydysbzlcmyd5gzed2hdqont6fbv import *
-from cjf4gmvtqzavt5mttfvmbfjhm7ch3lbt4h2eiym62rnlhbbsjnhc import *
+from .cpttran2wczmw3kpspicbhpxxfelrksjbkaygv3qbmjaasij5kbq import *
+from .c2bfves4bpjtey4yqcewx2wmcydysbzlcmyd5gzed2hdqont6fbv import *
 
