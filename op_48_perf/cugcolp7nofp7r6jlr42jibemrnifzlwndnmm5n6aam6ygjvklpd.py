@@ -95,6 +95,8 @@ def triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0(in_ptr0, in_ptr1, i
         tmp1 = tl.full([XBLOCK, R0_BLOCK], 128256, tl.int32)
         tmp2 = tmp0 + tmp1
         tmp3 = tmp0 < 0
+        # tl.device_print("tmp2", tmp2)
+        # tl.device_print("tmp0", tmp0)
         tmp4 = tl.where(tmp3, tmp2, tmp0)
         tl.device_assert((0 <= tmp4) & (tmp4 < 128256), "index out of bounds: 0 <= tmp4 < 128256")
         tmp6 = tl.load(in_ptr1 + (r0_1 + 4096*tmp4), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)

@@ -256,11 +256,10 @@ class TestCompiledLlama48PerfOps(TestCase):
             stream=self.stream0,
         )
 
-    @unittest.skip("IOT instruction")
     def test_triton_red_fused__to_copy_embedding_mean_mul_pow_rsqrt_0(self, device):
         kernel_args = [
             [
-                torch.zeros((4, 1), device=device, dtype=torch.int64),
+                torch.ones((4, 1), device=device, dtype=torch.int64),
                 torch.randn((128256, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4096,), device=device, dtype=torch.bfloat16),
                 torch.randn((), device="cpu", dtype=torch.float64).item(),
@@ -269,7 +268,7 @@ class TestCompiledLlama48PerfOps(TestCase):
                 4096,
             ],
             [
-                torch.zeros((4, 1024), device=device, dtype=torch.int64),
+                torch.ones((4, 1024), device=device, dtype=torch.int64),
                 torch.randn((128256, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4096,), device=device, dtype=torch.bfloat16),
                 torch.randn((), device="cpu", dtype=torch.float64).item(),
@@ -407,11 +406,10 @@ class TestCompiledLlama48PerfOps(TestCase):
             stream=self.stream0,
         )
 
-    @unittest.skip("IOT instruction")
     def test_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_7(self, device):
         kernel_args = [
             [
-                torch.zeros((4, 1), device=device, dtype=torch.int64),
+                torch.ones((4, 1), device=device, dtype=torch.int64),
                 torch.randn((128256, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4096,), device=device, dtype=torch.bfloat16),
@@ -421,12 +419,12 @@ class TestCompiledLlama48PerfOps(TestCase):
                 4096,
             ],
             [
-                torch.zeros((4, 1024), device=device, dtype=torch.int64),
+                torch.ones((4, 1024), device=device, dtype=torch.int64),
                 torch.randn((128256, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4096, 4096), device=device, dtype=torch.bfloat16),
                 torch.randn((4096,), device=device, dtype=torch.bfloat16),
                 torch.randn((), device="cpu", dtype=torch.float64).item(),
-                torch.randn((4, 1, 4096), device=device, dtype=torch.bfloat16),
+                torch.randn((4, 1024, 4096), device=device, dtype=torch.bfloat16),
                 4096,
                 4096,
             ],
